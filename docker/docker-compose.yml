@@ -1,0 +1,48 @@
+version: "3.8"
+services:
+
+  postgres-cm:
+    container_name: postgres-cm
+    build: ./postgres
+    volumes:
+      - ./postgres/chizumemo_data:/var/lib/postgresql/data
+      - ./postgres/sql:/docker-entrypoint-initdb.d
+    env_file: ./postgres/.env_db
+    ports:
+      - 5435:5432
+
+  nginx:
+    image: nginx:stable
+    container_name: nginx
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    ports:
+      - 80:80
+    networks:
+      - default
+    # depends_on:
+    #   - quarkus-cm
+    #   - nuxtjs-cm
+
+  nuxtjs-cm:
+      build: ./nuxtjs
+      container_name: nuxtjs-cm
+      # command: sh -c "yarn install && yarn build && yarn start"
+      command: sh -c "yarn install && yarn dev"
+      ports:
+        - "3002:3000"
+      working_dir: "/src"
+      volumes:
+        - "./nuxtjs/src:/src"
+        - node_modules_volume:/src/node_modules
+      tty: true
+      environment:
+        - CHOKIDAR_USEPOLLING=true
+        - HOST=0.0.0.0
+        - port=3000
+      networks:
+        - default
+
+volumes:
+  node_modules_volume:
+
